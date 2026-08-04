@@ -5,13 +5,16 @@ import { createTodoGateway } from "../src/todos.js";
 import { MemoryTodoSdk } from "./helpers.js";
 
 describe("todos gateway tests", () => {
-  it("lists pending (uncompleted) todos", async () => {
+  it("lists pending (uncompleted) todos and filters with search keyword", async () => {
     const sdk = new MemoryTodoSdk();
     const gateway = createTodoGateway(sdk);
 
-    const pending = await gateway.listPendingTodos();
+    const pending = await gateway.listPendingTodos({ limit: 10 });
     expect(pending.length).toBe(2);
-    expect(pending[0].title).toBe("Write documentation");
+
+    const filtered = await gateway.listPendingTodos({ search: "Write" });
+    expect(filtered.length).toBe(1);
+    expect(filtered[0].title).toBe("Write documentation");
   });
 
   it("appends focus record to todo note with correct revision", async () => {

@@ -4,6 +4,11 @@
 export type PomodoroMode = "idle" | "work" | "shortBreak" | "longBreak";
 
 /**
+ * 预设专注模式类型：经典 (25m)、深度 (50m)、冲刺 (15m)
+ */
+export type FocusPreset = "classic" | "deep" | "sprint";
+
+/**
  * 番茄钟设置选项
  */
 export interface PomodoroSettings {
@@ -28,6 +33,10 @@ export interface ActiveTodoInfo {
   readonly id: string;
   readonly title: string;
   readonly revision: number;
+  /** 预估番茄数 (1 - 8)，默认 1 */
+  readonly estimatedPomodoros?: number;
+  /** 已完成番茄数 */
+  readonly completedPomodoros?: number;
 }
 
 /**
@@ -41,6 +50,7 @@ export interface PomodoroSessionState {
   readonly activeTodo: ActiveTodoInfo | null;
   readonly completedPomodorosInCycle: number;
   readonly lastStartedAt: string | null;
+  readonly currentPreset?: FocusPreset;
 }
 
 /**
@@ -63,6 +73,17 @@ export interface TodoFocusStat {
 }
 
 /**
+ * 专注时间线日志
+ */
+export interface FocusTimelineLog {
+  readonly id: string;
+  readonly time: string; // HH:MM
+  readonly minutes: number;
+  readonly todoTitle?: string;
+  readonly date: string; // YYYY-MM-DD
+}
+
+/**
  * 全局专注统计数据持久化 Schema
  */
 export interface PomodoroStatsRecord {
@@ -71,14 +92,6 @@ export interface PomodoroStatsRecord {
   readonly totalFocusMinutes: number;
   readonly dailyStats: Record<string, DailyFocusStat>;
   readonly todoStats: Record<string, TodoFocusStat>;
+  readonly timelineLogs?: readonly FocusTimelineLog[];
   readonly lastUpdated: string;
-}
-
-/**
- * 统一的本地存储快照包含 sessionState 与 stats
- */
-export interface PomodoroStoragePayload {
-  readonly settings: PomodoroSettings;
-  readonly sessionState: PomodoroSessionState;
-  readonly stats: PomodoroStatsRecord;
 }

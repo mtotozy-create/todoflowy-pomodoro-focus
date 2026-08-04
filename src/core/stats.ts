@@ -1,4 +1,9 @@
-import type { DailyFocusStat, PomodoroStatsRecord, TodoFocusStat } from "./types.js";
+import type {
+  DailyFocusStat,
+  FocusTimelineLog,
+  PomodoroStatsRecord,
+  TodoFocusStat,
+} from "./types.js";
 
 /**
  * 创建空白的初始专注统计记录
@@ -12,6 +17,7 @@ export function createInitialStats(nowIso: string): PomodoroStatsRecord {
     totalFocusMinutes: 0,
     dailyStats: {},
     todoStats: {},
+    timelineLogs: [],
     lastUpdated: nowIso,
   };
 }
@@ -31,6 +37,7 @@ export function recordCompletedPomodoro(
   todoInfo?: { id: string; title: string } | null,
 ): PomodoroStatsRecord {
   const dateStr = now.toISOString().slice(0, 10);
+  const timeStr = now.toTimeString().slice(0, 5); // HH:MM
   const nowIso = now.toISOString();
 
   // 1. 更新每日统计
@@ -56,11 +63,22 @@ export function recordCompletedPomodoro(
     };
     nextTodoStats[todoInfo.id] = {
       ...existingTodo,
-      todoTitle: todoInfo.title, // 更新最新 title
+      todoTitle: todoInfo.title,
       completedPomodoros: existingTodo.completedPomodoros + 1,
       totalFocusMinutes: existingTodo.totalFocusMinutes + focusMinutes,
     };
   }
+
+  // 3. 增加时间线日志条目 (保持最新 50 条)
+  const newLog: FocusTimelineLog = {
+    id: `log-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    time: timeStr,
+    minutes: focusMinutes,
+    todoTitle: todoInfo?.title,
+    date: dateStr,
+  };
+  const currentLogs = current.timelineLogs ?? [];
+  const updatedLogs = [newLog, ...currentLogs].slice(0, 50);
 
   return {
     version: 1,
@@ -71,6 +89,7 @@ export function recordCompletedPomodoro(
       [dateStr]: updatedDaily,
     },
     todoStats: nextTodoStats,
+    timelineLogs: updatedLogs,
     lastUpdated: nowIso,
   };
 }

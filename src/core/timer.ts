@@ -1,5 +1,6 @@
 import type {
   ActiveTodoInfo,
+  FocusPreset,
   PomodoroMode,
   PomodoroSessionState,
   PomodoroSettings,
@@ -29,7 +30,46 @@ export function createInitialSessionState(
     activeTodo: null,
     completedPomodorosInCycle: 0,
     lastStartedAt: null,
+    currentPreset: "classic",
   };
+}
+
+/**
+ * 切换 preset 预设模式 (25m / 50m / 15m)
+ */
+export function applyPreset(
+  preset: FocusPreset,
+  state: PomodoroSessionState,
+  settings: PomodoroSettings,
+): { state: PomodoroSessionState; updatedSettings: PomodoroSettings } {
+  let workMins = 25;
+  let shortMins = 5;
+  if (preset === "deep") {
+    workMins = 50;
+    shortMins = 10;
+  } else if (preset === "sprint") {
+    workMins = 15;
+    shortMins = 3;
+  }
+
+  const updatedSettings: PomodoroSettings = {
+    ...settings,
+    workDurationMinutes: workMins,
+    shortBreakDurationMinutes: shortMins,
+  };
+
+  const workSecs = workMins * 60;
+  const nextState: PomodoroSessionState = {
+    ...state,
+    mode: "idle",
+    isRunning: false,
+    remainingSeconds: workSecs,
+    totalDurationSeconds: workSecs,
+    currentPreset: preset,
+    lastStartedAt: null,
+  };
+
+  return { state: nextState, updatedSettings };
 }
 
 /**
@@ -64,11 +104,20 @@ export function startSession(
 /**
  * 暂停当前运行中的倒计时
  */
-export function pauseSession(state: PomodoroSessionState): PomodoroSessionState {
+export function pauseSession(
+  state: PomodoroSessionState,
+  nowMs: number = Date.now(),
+): PomodoroSessionState {
   if (!state.isRunning) return state;
+
+  // 结算当前流逝时间
+  const computed = computeCurrentRemainingSeconds(state, nowMs);
+
   return {
     ...state,
     isRunning: false,
+    remainingSeconds: computed,
+    lastStartedAt: null,
   };
 }
 
@@ -88,22 +137,35 @@ export function resumeSession(
 }
 
 /**
- * 步进倒计时（通常每秒触发）
- * @param state 当前状态
- * @param secondsToSubtract 每次递减秒数，默认为 1
- * @returns 步进后的新状态
+ * 基于物理时间戳计算当前真实剩余秒数 (修复时间不走 Bug 的核心)
+ */
+export function computeCurrentRemainingSeconds(
+  state: PomodoroSessionState,
+  nowMs: number = Date.now(),
+): number {
+  if (!state.isRunning || !state.lastStartedAt) {
+    return Math.max(0, state.remainingSeconds);
+  }
+
+  const startedMs = new Date(state.lastStartedAt).getTime();
+  const elapsedSecs = Math.max(0, Math.floor((nowMs - startedMs) / 1000));
+  return Math.max(0, state.remainingSeconds - elapsedSecs);
+}
+
+/**
+ * 步进倒计时（根据真实物理时间戳）
  */
 export function tickSession(
   state: PomodoroSessionState,
-  secondsToSubtract = 1,
+  nowMs: number = Date.now(),
 ): PomodoroSessionState {
-  if (!state.isRunning || state.remainingSeconds <= 0) return state;
+  if (!state.isRunning) return state;
 
-  const nextRemaining = Math.max(0, state.remainingSeconds - secondsToSubtract);
+  const currentRemaining = computeCurrentRemainingSeconds(state, nowMs);
   return {
     ...state,
-    remainingSeconds: nextRemaining,
-    isRunning: nextRemaining > 0,
+    remainingSeconds: currentRemaining,
+    isRunning: currentRemaining > 0,
   };
 }
 
@@ -133,14 +195,12 @@ export function skipBreak(
     isRunning: false,
     remainingSeconds: workSecs,
     totalDurationSeconds: workSecs,
+    lastStartedAt: null,
   };
 }
 
 /**
- * 在倒计时归零时决定下一个模式与状态（专注结束 -> 休息；休息结束 -> 空闲/下一次专注）
- * @param state 已归零的当前状态
- * @param settings 番茄钟配置
- * @returns { nextState, sessionJustCompleted }
+ * 在倒计时归零时决定下一个模式与状态
  */
 export function completeSessionStep(
   state: PomodoroSessionState,
@@ -161,11 +221,11 @@ export function completeSessionStep(
     const totalSecs = durationMins * 60;
 
     const nextState: PomodoroSessionState = {
+      ...state,
       mode: nextMode,
       isRunning: settings.autoStartBreaks,
       remainingSeconds: totalSecs,
       totalDurationSeconds: totalSecs,
-      activeTodo: state.activeTodo,
       completedPomodorosInCycle: isLongBreakTime ? 0 : nextCycle,
       lastStartedAt: settings.autoStartBreaks ? nowIso : null,
     };
@@ -177,15 +237,14 @@ export function completeSessionStep(
     };
   }
 
-  // 如果刚刚结束的是休息阶段
+  // 刚刚结束的是休息阶段
   const workSecs = settings.workDurationMinutes * 60;
   const nextState: PomodoroSessionState = {
+    ...state,
     mode: "idle",
     isRunning: false,
     remainingSeconds: workSecs,
     totalDurationSeconds: workSecs,
-    activeTodo: state.activeTodo,
-    completedPomodorosInCycle: state.completedPomodorosInCycle,
     lastStartedAt: null,
   };
 

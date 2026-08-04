@@ -8,7 +8,6 @@ import type {
   PomodoroSettings,
   PomodoroStatsRecord,
 } from "./core/types.js";
-import { StorageRecordError } from "./errors.js";
 
 export interface StorageGateway {
   get(key: string): Promise<unknown>;
@@ -85,7 +84,6 @@ export async function loadStats(
 
     const obj = raw as Record<string, unknown>;
     if (obj.version !== 1) {
-      // NOTE: 未知版本处理，防止覆盖未知 schema
       return createInitialStats(nowIso);
     }
 
@@ -105,6 +103,9 @@ export async function loadStats(
         obj.todoStats && typeof obj.todoStats === "object"
           ? (obj.todoStats as PomodoroStatsRecord["todoStats"])
           : {},
+      timelineLogs: Array.isArray(obj.timelineLogs)
+        ? (obj.timelineLogs as PomodoroStatsRecord["timelineLogs"])
+        : [],
       lastUpdated:
         typeof obj.lastUpdated === "string" ? obj.lastUpdated : nowIso,
     };
@@ -141,7 +142,7 @@ export async function loadSessionState(
         obj.mode === "work" || obj.mode === "shortBreak" || obj.mode === "longBreak"
           ? obj.mode
           : "idle",
-      isRunning: false, // 读取离线状态时默认挂起为 false，需显式 resume
+      isRunning: typeof obj.isRunning === "boolean" ? obj.isRunning : false,
       remainingSeconds:
         typeof obj.remainingSeconds === "number"
           ? obj.remainingSeconds
@@ -160,6 +161,12 @@ export async function loadSessionState(
           : 0,
       lastStartedAt:
         typeof obj.lastStartedAt === "string" ? obj.lastStartedAt : null,
+      currentPreset:
+        obj.currentPreset === "classic" ||
+        obj.currentPreset === "deep" ||
+        obj.currentPreset === "sprint"
+          ? obj.currentPreset
+          : "classic",
     };
   } catch {
     return createInitialSessionState(settings);

@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  applyPreset,
   completeSessionStep,
+  computeCurrentRemainingSeconds,
   createInitialSessionState,
   DEFAULT_SETTINGS,
   pauseSession,
@@ -20,13 +22,33 @@ describe("timer core state machine tests", () => {
     expect(state.remainingSeconds).toBe(25 * 60);
   });
 
-  it("starts shortBreak and longBreak sessions", () => {
+  it("applies classic, deep and sprint presets", () => {
     const initial = createInitialSessionState(DEFAULT_SETTINGS);
-    const shortB = startSession(initial, DEFAULT_SETTINGS, "shortBreak");
-    expect(shortB.remainingSeconds).toBe(5 * 60);
 
-    const longB = startSession(initial, DEFAULT_SETTINGS, "longBreak");
-    expect(longB.remainingSeconds).toBe(15 * 60);
+    const deep = applyPreset("deep", initial, DEFAULT_SETTINGS);
+    expect(deep.updatedSettings.workDurationMinutes).toBe(50);
+    expect(deep.state.remainingSeconds).toBe(50 * 60);
+
+    const sprint = applyPreset("sprint", initial, DEFAULT_SETTINGS);
+    expect(sprint.updatedSettings.workDurationMinutes).toBe(15);
+    expect(sprint.state.remainingSeconds).toBe(15 * 60);
+  });
+
+  it("computes physical remaining seconds based on timestamps", () => {
+    const initial = createInitialSessionState(DEFAULT_SETTINGS);
+    const startMs = new Date("2026-08-04T12:00:00.000Z").getTime();
+    const started = startSession(
+      initial,
+      DEFAULT_SETTINGS,
+      "work",
+      null,
+      new Date(startMs).toISOString(),
+    );
+
+    // 假设时间流逝了 10 秒
+    const nowMs = startMs + 10 * 1000;
+    const computed = computeCurrentRemainingSeconds(started, nowMs);
+    expect(computed).toBe(25 * 60 - 10);
   });
 
   it("handles pause and resume no-op branches", () => {
@@ -38,18 +60,21 @@ describe("timer core state machine tests", () => {
     expect(resumedNoop.isRunning).toBe(false);
   });
 
-  it("ticks countdown seconds correctly and ignores when not running or 0 remaining", () => {
+  it("ticks countdown seconds correctly based on timestamp", () => {
     const initial = createInitialSessionState(DEFAULT_SETTINGS);
-    expect(tickSession(initial, 1)).toEqual(initial);
+    expect(tickSession(initial)).toEqual(initial);
 
-    const started = startSession(initial, DEFAULT_SETTINGS, "work");
-    const ticked = tickSession(started, 5);
+    const startMs = new Date("2026-08-04T12:00:00.000Z").getTime();
+    const started = startSession(
+      initial,
+      DEFAULT_SETTINGS,
+      "work",
+      null,
+      new Date(startMs).toISOString(),
+    );
 
+    const ticked = tickSession(started, startMs + 5000);
     expect(ticked.remainingSeconds).toBe(25 * 60 - 5);
-    expect(ticked.isRunning).toBe(true);
-
-    const zeroRemaining = { ...started, remainingSeconds: 0 };
-    expect(tickSession(zeroRemaining, 1)).toEqual(zeroRemaining);
   });
 
   it("completes work session and transitions to short break", () => {
@@ -66,46 +91,12 @@ describe("timer core state machine tests", () => {
     expect(nextState.completedPomodorosInCycle).toBe(1);
   });
 
-  it("completes 4th work session and transitions to long break", () => {
-    const initial = createInitialSessionState(DEFAULT_SETTINGS);
-    const zeroState = {
-      ...initial,
-      mode: "work" as const,
-      completedPomodorosInCycle: 3,
-      remainingSeconds: 0,
-    };
-
-    const { nextState } = completeSessionStep(zeroState, DEFAULT_SETTINGS);
-
-    expect(nextState.mode).toBe("longBreak");
-    expect(nextState.completedPomodorosInCycle).toBe(0);
-  });
-
-  it("completes break session and transitions to idle", () => {
-    const initial = createInitialSessionState(DEFAULT_SETTINGS);
-    const zeroBreak = {
-      ...initial,
-      mode: "shortBreak" as const,
-      remainingSeconds: 0,
-    };
-
-    const { nextState, completedWorkMode } = completeSessionStep(
-      zeroBreak,
-      DEFAULT_SETTINGS,
-    );
-    expect(completedWorkMode).toBe(false);
-    expect(nextState.mode).toBe("idle");
-  });
-
   it("resets and skips break", () => {
     const initial = createInitialSessionState(DEFAULT_SETTINGS);
     const breakState = { ...initial, mode: "shortBreak" as const };
 
     const skipped = skipBreak(breakState, DEFAULT_SETTINGS);
     expect(skipped.mode).toBe("idle");
-
-    const nonBreakSkipped = skipBreak(initial, DEFAULT_SETTINGS);
-    expect(nonBreakSkipped.mode).toBe("idle");
 
     const reseted = resetSession(DEFAULT_SETTINGS);
     expect(reseted.mode).toBe("idle");

@@ -9,7 +9,10 @@ export type TodoItem = PluginTodo;
 export type TodoPluginSdkGateway = PluginApi["todos"];
 
 export interface TodoGateway {
-  listPendingTodos(): Promise<readonly TodoItem[]>;
+  listPendingTodos(query?: {
+    search?: string;
+    limit?: number;
+  }): Promise<readonly TodoItem[]>;
   appendFocusRecord(
     todoId: string,
     durationMinutes: number,
@@ -19,13 +22,30 @@ export interface TodoGateway {
 
 export function createTodoGateway(sdk: TodoPluginSdkGateway): TodoGateway {
   return {
-    async listPendingTodos(): Promise<readonly TodoItem[]> {
+    async listPendingTodos(query?: {
+      search?: string;
+      limit?: number;
+    }): Promise<readonly TodoItem[]> {
       try {
-        const response = await sdk.list({ limit: 100 });
+        const limit = query?.limit ?? 20; // 默认拉取 20 条，不加载全量
+        const response = await sdk.list({
+          limit,
+          search: query?.search,
+        });
         const items = response.items ?? [];
-        const pending = items.filter(
+        let pending = items.filter(
           (item) => item.status !== "done" && item.status !== "cancelled",
         );
+
+        if (query?.search && query.search.trim().length > 0) {
+          const keyword = query.search.trim().toLowerCase();
+          pending = pending.filter(
+            (item) =>
+              item.title.toLowerCase().includes(keyword) ||
+              item.description?.toLowerCase().includes(keyword),
+          );
+        }
+
         return pending;
       } catch (err) {
         throw new TodoOperationError(
@@ -56,13 +76,10 @@ export function createTodoGateway(sdk: TodoPluginSdkGateway): TodoGateway {
         : noteLine;
 
       try {
-        const updated = await sdk.update(
-          todoId,
-          {
-            description: updatedDescription,
-            revision: currentTodo.revision,
-          },
-        );
+        const updated = await sdk.update(todoId, {
+          description: updatedDescription,
+          revision: currentTodo.revision,
+        });
         return updated;
       } catch (err) {
         throw new TodoOperationError(

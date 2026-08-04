@@ -3,10 +3,9 @@ import { defineRuntime, plugin } from "@todoflowy/plugin-sdk";
 import { recordCompletedPomodoro } from "./core/stats.js";
 import {
   completeSessionStep,
-  createInitialSessionState,
+  computeCurrentRemainingSeconds,
   resumeSession,
   startSession,
-  tickSession,
 } from "./core/timer.js";
 import type {
   PomodoroSessionState,
@@ -47,21 +46,30 @@ export async function startPomodoroRuntime(
   if (!active) return () => {};
 
   const processTick = async () => {
-    if (!active || !sessionState.isRunning) return;
+    if (!active) return;
+    sessionState = await loadSessionState(dependencies.storage, settings);
 
-    sessionState = tickSession(sessionState, 1);
-    await saveSessionState(dependencies.storage, sessionState);
+    if (!sessionState.isRunning) return;
+
+    const remainingSecs = computeCurrentRemainingSeconds(
+      sessionState,
+      dependencies.now().getTime(),
+    );
 
     // 检查倒计时归零
-    if (sessionState.remainingSeconds <= 0) {
+    if (remainingSecs <= 0) {
       const { nextState, completedWorkMode, completedMinutes } =
-        completeSessionStep(sessionState, settings, dependencies.now().toISOString());
+        completeSessionStep(
+          sessionState,
+          settings,
+          dependencies.now().toISOString(),
+        );
 
       sessionState = nextState;
       await saveSessionState(dependencies.storage, sessionState);
 
       if (completedWorkMode) {
-        // 1. 专注模式归零，记录统计数据
+        statsRecord = await loadStats(dependencies.storage);
         statsRecord = recordCompletedPomodoro(
           statsRecord,
           completedMinutes,
@@ -70,7 +78,7 @@ export async function startPomodoroRuntime(
         );
         await saveStats(dependencies.storage, statsRecord);
 
-        // 2. 追加 Todo 备注（若有选中的 Todo）
+        // 追加 Todo 描述
         if (sessionState.activeTodo) {
           try {
             await dependencies.todos.appendFocusRecord(
@@ -79,7 +87,6 @@ export async function startPomodoroRuntime(
               settings.notePrefix,
             );
           } catch {
-            // HACK: API 冲突时不阻塞整体流程，仅弹框提示
             await dependencies.toast(
               "Pomodoro finished! (Failed to update todo note due to conflict)",
             );
@@ -95,12 +102,11 @@ export async function startPomodoroRuntime(
     }
   };
 
-  // 启动 1s 轮询定时器
   timerId = setInterval(() => {
     void processTick();
   }, 1000);
 
-  // 监听宿主工具栏点击触发
+  // 监听工具栏快捷启动按键
   const unsubscribeCommand = dependencies.onCommand(async (payload) => {
     if (
       payload !== null &&
@@ -110,13 +116,13 @@ export async function startPomodoroRuntime(
     ) {
       if (!active) return;
       settings = await loadSettings(dependencies.storage);
+      sessionState = await loadSessionState(dependencies.storage, settings);
 
       if (sessionState.mode === "idle") {
-        // 如果是从空闲状态直接工具栏启动，尝试选取首条未完成待办
         let activeTodo = sessionState.activeTodo;
         if (!activeTodo) {
           try {
-            const pendingList = await dependencies.todos.listPendingTodos();
+            const pendingList = await dependencies.todos.listPendingTodos({ limit: 1 });
             if (pendingList.length > 0) {
               const first = pendingList[0];
               activeTodo = {
@@ -142,7 +148,6 @@ export async function startPomodoroRuntime(
           `🍅 Started Pomodoro focus (${settings.workDurationMinutes}m)`,
         );
       } else if (!sessionState.isRunning) {
-        // 如果处于暂停状态，进行恢复
         sessionState = resumeSession(
           sessionState,
           dependencies.now().toISOString(),
@@ -150,8 +155,12 @@ export async function startPomodoroRuntime(
         await saveSessionState(dependencies.storage, sessionState);
         await dependencies.toast("▶️ Pomodoro focus resumed.");
       } else {
+        const remaining = computeCurrentRemainingSeconds(
+          sessionState,
+          dependencies.now().getTime(),
+        );
         await dependencies.toast(
-          `⏱️ Pomodoro in progress (${Math.ceil(sessionState.remainingSeconds / 60)}m remaining)`,
+          `⏱️ Pomodoro in progress (${Math.ceil(remaining / 60)}m remaining)`,
         );
       }
     }
