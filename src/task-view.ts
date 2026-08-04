@@ -81,11 +81,11 @@ export async function mountTaskView(
 
   if (!active) return () => {};
 
-  // 构建 DOM 节点结构
+  // DOM node tree
   const styleEl = element("style", { text: TASK_VIEW_CSS });
   const appContainer = element("section", { className: "pomodoro-studio-app" });
 
-  // 1. 顶部 App Bar
+  // 1. App Bar
   const appBar = element("div", { className: "pomodoro-studio__bar" });
   const appTitle = element("div", {
     className: "pomodoro-studio__title",
@@ -103,10 +103,10 @@ export async function mountTaskView(
   appBar.appendChild(appTitle);
   appBar.appendChild(pillsContainer);
 
-  // 2. 双列 Bento Grid 网格
+  // 2. Bento Grid
   const grid = element("div", { className: "pomodoro-studio__grid" });
 
-  // 左栏: 主专注控制台
+  // Left Column: Main Console
   const mainCol = element("div", { className: "pomodoro-studio__main" });
 
   // Presets Quick Switch Bar
@@ -176,10 +176,9 @@ export async function mountTaskView(
   mainCol.appendChild(presetsBar);
   mainCol.appendChild(timerCard);
 
-  // 右栏: 侧边抽屉 (Search Task Picker + Timeline Log)
+  // Right Column: Task Picker & Timeline Log
   const sidebarCol = element("div", { className: "pomodoro-studio__sidebar" });
 
-  // 任务选择面板 Card
   const pickerCard = element("div", { className: "pomodoro-panel-card" });
   const pickerHeaderRow = element("div");
   pickerHeaderRow.style.display = "flex";
@@ -187,11 +186,11 @@ export async function mountTaskView(
   pickerHeaderRow.style.alignItems = "center";
 
   const pickerHeaderTitle = element("span", {
-    text: "🎯 搜索与选择待办 (limit: 20)",
+    text: "🎯 Select Todo (limit: 20)",
   });
   pickerHeaderTitle.style.fontWeight = "800";
   pickerHeaderTitle.style.fontSize = "14px";
-  const pickerHeaderPage = element("span", { text: "页码 1/2" });
+  const pickerHeaderPage = element("span", { text: "Page 1/2" });
   pickerHeaderPage.style.fontSize = "12px";
   pickerHeaderPage.style.color = "var(--theme-muted-color, #6b7280)";
 
@@ -201,17 +200,17 @@ export async function mountTaskView(
   const searchInput = element("input", {
     className: "pomodoro-search-input",
   }) as HTMLInputElement;
-  searchInput.placeholder = "🔍 搜索待办名称...";
+  searchInput.placeholder = "🔍 Search todo title...";
 
   // Picker Tabs
   const pickerTabs = element("div", { className: "pomodoro-picker-tabs" });
   const tabToday = element("div", {
     className: "pomodoro-tab-item pomodoro-tab-item--active",
-    text: "今日待办",
+    text: "Today",
   });
   const tabAll = element("div", {
     className: "pomodoro-tab-item",
-    text: "全部分页",
+    text: "All",
   });
 
   tabToday.addEventListener("click", async () => {
@@ -247,10 +246,10 @@ export async function mountTaskView(
   pickerCard.appendChild(pickerTabs);
   pickerCard.appendChild(todoListContainer);
 
-  // 时间线面板 Card
+  // Timeline Card
   const timelineCard = element("div", { className: "pomodoro-panel-card" });
   const timelineHeader = element("div", {
-    text: "📊 今日专注时间线 (Timeline)",
+    text: "📊 Today's Focus Timeline",
   });
   timelineHeader.style.fontWeight = "800";
   timelineHeader.style.fontSize = "14px";
@@ -271,12 +270,12 @@ export async function mountTaskView(
 
   root.replaceChildren(appContainer);
 
-  // 渲染待办列表
+  // Render Todo Items
   const renderTodoList = () => {
     todoListContainer.replaceChildren();
     if (pendingTodos.length === 0) {
       const emptyNote = element("div", {
-        text: activeTab === "today" ? "今日暂无计划待办。" : "暂无待办事项。",
+        text: activeTab === "today" ? "No planned todos for today." : "No pending todos found.",
       });
       emptyNote.style.fontSize = "12px";
       emptyNote.style.color = "var(--theme-muted-color, #6b7280)";
@@ -296,7 +295,7 @@ export async function mountTaskView(
       titleEl.style.fontWeight = "700";
 
       const metaEl = element("div", {
-        text: `优先: ${item.priority ? item.priority.toUpperCase() : "NORMAL"}`,
+        text: `Priority: ${item.priority ? item.priority.toUpperCase() : "NORMAL"}`,
       });
       metaEl.style.fontSize = "11px";
       metaEl.style.color = "var(--theme-muted-color, #6b7280)";
@@ -305,7 +304,7 @@ export async function mountTaskView(
       infoEl.appendChild(titleEl);
       infoEl.appendChild(metaEl);
 
-      // 右侧预估调控控件组
+      // Estimated Pomodoros Controls
       const estContainer = element("div", { className: "pomodoro-est-controls" });
       const estCount = isSelected
         ? sessionState.activeTodo?.estimatedPomodoros ?? 1
@@ -376,7 +375,7 @@ export async function mountTaskView(
     );
 
     if (logs.length === 0) {
-      const empty = element("div", { text: "今日暂无专注完成记录。" });
+      const empty = element("div", { text: "No focus records today yet." });
       empty.style.fontSize = "12px";
       empty.style.color = "var(--theme-muted-color, #6b7280)";
       timelineList.appendChild(empty);
@@ -386,7 +385,7 @@ export async function mountTaskView(
     for (const log of logs.slice(0, 5)) {
       const itemEl = element("div", { className: "pomodoro-timeline-item" });
       const textEl = element("span", {
-        text: `🍅 ${log.todoTitle ? log.todoTitle : "专注会话"} (${log.minutes}m)`,
+        text: `🍅 ${log.todoTitle ? log.todoTitle : "Focus Session"} (${log.minutes}m)`,
       });
       const timeEl = element("span", { text: log.time });
       timeEl.style.color = "var(--theme-muted-color, #6b7280)";
@@ -401,20 +400,20 @@ export async function mountTaskView(
   const renderUI = () => {
     if (!active) return;
 
-    // 1. 根据物理时间戳实时计算剩余时间
+    // 1. Calculate remaining seconds based on physical timestamp
     const currentRemaining = computeCurrentRemainingSeconds(
       sessionState,
       dependencies.now().getTime(),
     );
     timerDisplay.textContent = formatTime(currentRemaining);
 
-    // 2. Preset 激活状态更新
+    // 2. Update Preset Active Status
     const activePreset = sessionState.currentPreset ?? "classic";
     btnPresetClassic.className = `pomodoro-preset-btn ${activePreset === "classic" ? "pomodoro-preset-btn--active" : ""}`;
     btnPresetDeep.className = `pomodoro-preset-btn ${activePreset === "deep" ? "pomodoro-preset-btn--active" : ""}`;
     btnPresetSprint.className = `pomodoro-preset-btn ${activePreset === "sprint" ? "pomodoro-preset-btn--active" : ""}`;
 
-    // 3. Mode Badge 呈现
+    // 3. Mode Badge Presentation
     let badgeText = "● IDLE";
     let badgeBg = "rgba(125, 125, 125, 0.1)";
     let badgeFg = "var(--theme-text-color, CanvasText)";
@@ -437,7 +436,7 @@ export async function mountTaskView(
     modeBadge.style.backgroundColor = badgeBg;
     modeBadge.style.color = badgeFg;
 
-    // 4. Banner Task 呈现与 🍅 图标进度展示
+    // 4. Target Banner Presentation
     if (sessionState.activeTodo) {
       bannerTitle.textContent = `📘 ${sessionState.activeTodo.title}`;
       const est = sessionState.activeTodo.estimatedPomodoros ?? 1;
@@ -450,16 +449,16 @@ export async function mountTaskView(
       }
       bannerIcons.textContent = icons.trim();
     } else {
-      bannerTitle.textContent = "-- 请在右侧面板点击选择一条待办事项开始专注 --";
+      bannerTitle.textContent = "-- Select a todo on the right panel to start focusing --";
       bannerHeaderRight.textContent = "Target: 🍅 1";
       bannerIcons.textContent = "⚪";
     }
 
-    // 5. 控制按钮组
+    // 5. Control Buttons
     controlsRow.replaceChildren();
     if (sessionState.mode === "idle") {
       const startBtn = button(
-        "🍅 开始专注",
+        "🍅 Start Focus",
         () => void handleStart(),
         "pomodoro-btn-giant-primary",
       );
@@ -467,12 +466,12 @@ export async function mountTaskView(
     } else if (sessionState.mode === "work") {
       if (sessionState.isRunning) {
         const pauseBtn = button(
-          "⏸️ 暂停专注",
+          "⏸️ Pause Focus",
           () => void handlePause(),
           "pomodoro-btn-giant-sub",
         );
         const resetBtn = button(
-          "🔄 重置",
+          "🔄 Reset",
           () => void handleReset(),
           "pomodoro-btn-giant-sub",
         );
@@ -480,12 +479,12 @@ export async function mountTaskView(
         controlsRow.appendChild(resetBtn);
       } else {
         const resumeBtn = button(
-          "▶️ 继续专注",
+          "▶️ Resume Focus",
           () => void handleResume(),
           "pomodoro-btn-giant-primary",
         );
         const resetBtn = button(
-          "🔄 重置",
+          "🔄 Reset",
           () => void handleReset(),
           "pomodoro-btn-giant-sub",
         );
@@ -494,29 +493,29 @@ export async function mountTaskView(
       }
     } else {
       const skipBtn = button(
-        "⏭️ 跳过休息",
+        "⏭️ Skip Break",
         () => void handleSkipBreak(),
         "pomodoro-btn-giant-sub",
       );
       controlsRow.appendChild(skipBtn);
     }
 
-    // 6. Pills 汇总
+    // 6. Pills Summary
     pillsContainer.replaceChildren();
     const todayStr = dependencies.now().toISOString().slice(0, 10);
     const todayStat = statsRecord.dailyStats[todayStr];
 
     const p1 = element("div", {
       className: "pomodoro-studio__pill",
-      text: `今日番茄: ${todayStat?.completedPomodoros ?? 0} 🍅`,
+      text: `Today: ${todayStat?.completedPomodoros ?? 0} 🍅`,
     });
     const p2 = element("div", {
       className: "pomodoro-studio__pill",
-      text: `专注时长: ${formatDuration(todayStat?.totalFocusMinutes ?? 0)}`,
+      text: `Focus: ${formatDuration(todayStat?.totalFocusMinutes ?? 0)}`,
     });
     const p3 = element("div", {
       className: "pomodoro-studio__pill",
-      text: `累计: ${statsRecord.totalCompletedPomodoros} 个`,
+      text: `Total: ${statsRecord.totalCompletedPomodoros} 🍅`,
     });
     pillsContainer.appendChild(p1);
     pillsContainer.appendChild(p2);
@@ -589,7 +588,7 @@ export async function mountTaskView(
 
   renderUI();
 
-  // 1s 轮询步进
+  // 1s interval tick
   timerId = setInterval(async () => {
     if (!active) return;
     statsRecord = await loadStats(dependencies.storage);
