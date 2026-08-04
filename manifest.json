@@ -2,7 +2,7 @@
   "manifestVersion": 2,
   "id": "todoflowy/pomodoro-focus",
   "name": "Pomodoro Focus",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "description": "Tomato timer and focus statistics plugin for TodoFlowy.",
   "author": "TodoFlowy Official",
   "homepage": "https://todoflowy.com",
@@ -22,9 +22,9 @@
   },
   "extensions": [
     {
-      "slot": "task-view",
-      "id": "pomodoro-focus-view",
-      "entry": "dist/task-view.js",
+      "slot": "sidebar-panel",
+      "id": "pomodoro-panel",
+      "entry": "dist/sidebar-panel.js",
       "label": "Pomodoro Focus",
       "capabilities": [
         "todos:read",
