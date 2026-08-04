@@ -220,6 +220,12 @@ export function completeSessionStep(
       : settings.shortBreakDurationMinutes;
     const totalSecs = durationMins * 60;
 
+    // 精确获取本次工作的实际分钟数（根据实际总秒数计算，非盲目读取全局 settings）
+    const actualWorkMinutes = Math.max(
+      1,
+      Math.round(state.totalDurationSeconds / 60),
+    );
+
     const nextState: PomodoroSessionState = {
       ...state,
       mode: nextMode,
@@ -233,7 +239,7 @@ export function completeSessionStep(
     return {
       nextState,
       completedWorkMode: true,
-      completedMinutes: settings.workDurationMinutes,
+      completedMinutes: actualWorkMinutes,
     };
   }
 

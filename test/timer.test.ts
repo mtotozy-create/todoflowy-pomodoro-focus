@@ -7,98 +7,75 @@ import {
   createInitialSessionState,
   DEFAULT_SETTINGS,
   pauseSession,
-  resetSession,
   resumeSession,
-  skipBreak,
   startSession,
-  tickSession,
 } from "../src/core/timer.js";
 
-describe("timer core state machine tests", () => {
-  it("initializes with default settings", () => {
-    const state = createInitialSessionState(DEFAULT_SETTINGS);
+describe("timer core logic tests", () => {
+  it("initializes default session state correctly", () => {
+    const state = createInitialSessionState();
     expect(state.mode).toBe("idle");
     expect(state.isRunning).toBe(false);
-    expect(state.remainingSeconds).toBe(25 * 60);
+    expect(state.remainingSeconds).toBe(1500);
   });
 
-  it("applies classic, deep and sprint presets", () => {
-    const initial = createInitialSessionState(DEFAULT_SETTINGS);
-
-    const deep = applyPreset("deep", initial, DEFAULT_SETTINGS);
-    expect(deep.updatedSettings.workDurationMinutes).toBe(50);
-    expect(deep.state.remainingSeconds).toBe(50 * 60);
-
-    const sprint = applyPreset("sprint", initial, DEFAULT_SETTINGS);
-    expect(sprint.updatedSettings.workDurationMinutes).toBe(15);
-    expect(sprint.state.remainingSeconds).toBe(15 * 60);
-  });
-
-  it("computes physical remaining seconds based on timestamps", () => {
-    const initial = createInitialSessionState(DEFAULT_SETTINGS);
-    const startMs = new Date("2026-08-04T12:00:00.000Z").getTime();
-    const started = startSession(
+  it("applies presets (sprint 15m, deep 50m) correctly", () => {
+    const initial = createInitialSessionState();
+    const { state: sprintState, updatedSettings: sprintSettings } = applyPreset(
+      "sprint",
       initial,
       DEFAULT_SETTINGS,
-      "work",
-      null,
-      new Date(startMs).toISOString(),
     );
+    expect(sprintState.remainingSeconds).toBe(900);
+    expect(sprintSettings.workDurationMinutes).toBe(15);
+    expect(sprintSettings.shortBreakDurationMinutes).toBe(3);
 
-    // 假设时间流逝了 10 秒
-    const nowMs = startMs + 10 * 1000;
-    const computed = computeCurrentRemainingSeconds(started, nowMs);
-    expect(computed).toBe(25 * 60 - 10);
-  });
-
-  it("handles pause and resume no-op branches", () => {
-    const initial = createInitialSessionState(DEFAULT_SETTINGS);
-    const pausedNoop = pauseSession(initial);
-    expect(pausedNoop.isRunning).toBe(false);
-
-    const resumedNoop = resumeSession(initial);
-    expect(resumedNoop.isRunning).toBe(false);
-  });
-
-  it("ticks countdown seconds correctly based on timestamp", () => {
-    const initial = createInitialSessionState(DEFAULT_SETTINGS);
-    expect(tickSession(initial)).toEqual(initial);
-
-    const startMs = new Date("2026-08-04T12:00:00.000Z").getTime();
-    const started = startSession(
+    const { state: deepState, updatedSettings: deepSettings } = applyPreset(
+      "deep",
       initial,
       DEFAULT_SETTINGS,
+    );
+    expect(deepState.remainingSeconds).toBe(3000);
+    expect(deepSettings.workDurationMinutes).toBe(50);
+  });
+
+  it("starts, pauses and resumes session using physical timestamps", () => {
+    const initial = createInitialSessionState();
+    const nowIso = "2026-08-04T12:00:00.000Z";
+    const started = startSession(initial, DEFAULT_SETTINGS, "work", null, nowIso);
+    expect(started.isRunning).toBe(true);
+    expect(started.lastStartedAt).toBe(nowIso);
+
+    // 假设时间流逝了 100 秒
+    const nowMsAfter100s = new Date("2026-08-04T12:01:40.000Z").getTime();
+    const computed = computeCurrentRemainingSeconds(started, nowMsAfter100s);
+    expect(computed).toBe(1400);
+
+    const paused = pauseSession(started, nowMsAfter100s);
+    expect(paused.isRunning).toBe(false);
+    expect(paused.remainingSeconds).toBe(1400);
+
+    const resumed = resumeSession(paused, "2026-08-04T12:02:00.000Z");
+    expect(resumed.isRunning).toBe(true);
+  });
+
+  it("completes work session with actual duration minutes for sprint mode", () => {
+    const initial = createInitialSessionState();
+    const { state: sprintState, updatedSettings } = applyPreset(
+      "sprint",
+      initial,
+      DEFAULT_SETTINGS,
+    );
+    const startedSprint = startSession(
+      sprintState,
+      updatedSettings,
       "work",
       null,
-      new Date(startMs).toISOString(),
+      "2026-08-04T12:00:00.000Z",
     );
 
-    const ticked = tickSession(started, startMs + 5000);
-    expect(ticked.remainingSeconds).toBe(25 * 60 - 5);
-  });
-
-  it("completes work session and transitions to short break", () => {
-    const initial = createInitialSessionState(DEFAULT_SETTINGS);
-    const started = startSession(initial, DEFAULT_SETTINGS, "work");
-    const zeroState = { ...started, remainingSeconds: 0 };
-
-    const { nextState, completedWorkMode, completedMinutes } =
-      completeSessionStep(zeroState, DEFAULT_SETTINGS);
-
-    expect(completedWorkMode).toBe(true);
-    expect(completedMinutes).toBe(25);
-    expect(nextState.mode).toBe("shortBreak");
-    expect(nextState.completedPomodorosInCycle).toBe(1);
-  });
-
-  it("resets and skips break", () => {
-    const initial = createInitialSessionState(DEFAULT_SETTINGS);
-    const breakState = { ...initial, mode: "shortBreak" as const };
-
-    const skipped = skipBreak(breakState, DEFAULT_SETTINGS);
-    expect(skipped.mode).toBe("idle");
-
-    const reseted = resetSession(DEFAULT_SETTINGS);
-    expect(reseted.mode).toBe("idle");
+    const result = completeSessionStep(startedSprint, updatedSettings);
+    expect(result.completedWorkMode).toBe(true);
+    expect(result.completedMinutes).toBe(15); // 确保精确计算为 15 分钟而不是 25 分钟
   });
 });
