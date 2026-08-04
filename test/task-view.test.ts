@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { mountSidebarPanel } from "../src/sidebar-panel.js";
+import { mountTaskView } from "../src/task-view.js";
 import { createTodoGateway } from "../src/todos.js";
 import { MemoryStorage, MemoryTodoSdk } from "./helpers.js";
 
@@ -9,7 +9,7 @@ const flushPromises = async () => {
   await Promise.resolve();
 };
 
-describe("sidebar-panel view tests", () => {
+describe("task-view view tests", () => {
   it("mounts desktop studio panel, handles presets, search input and controls cleanly", async () => {
     vi.useFakeTimers();
 
@@ -21,7 +21,7 @@ describe("sidebar-panel view tests", () => {
     let eventListener: ((payload: unknown) => void) | null = null;
     let currentTime = new Date("2026-08-04T12:00:00.000Z");
 
-    const unmount = await mountSidebarPanel(root, {
+    const unmount = await mountTaskView(root, {
       getLocale: async () => "en-US",
       getTheme: async () => "light",
       now: () => currentTime,
@@ -46,7 +46,7 @@ describe("sidebar-panel view tests", () => {
       ".pomodoro-preset-btn",
     );
     expect(presets.length).toBe(3);
-    presets[1].click(); // Deep 50m
+    presets[1].click();
 
     await vi.advanceTimersByTimeAsync(50);
     await flushPromises();

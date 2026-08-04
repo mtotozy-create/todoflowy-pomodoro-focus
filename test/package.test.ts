@@ -70,7 +70,7 @@ describe("Pomodoro Focus deterministic package", () => {
     const validated = run(["validate", first, ...compatibility]);
     expect(validated.status).toBe(0);
     expect(validated.stdout).toMatch(
-      /^valid todoflowy\/pomodoro-focus@1\.1\.0 size=\d+ sha256=[a-f0-9]{64}\n$/,
+      /^valid todoflowy\/pomodoro-focus@1\.2\.0 size=\d+ sha256=[a-f0-9]{64}\n$/,
     );
 
     const inspected = run(["inspect", first, ...compatibility]);
@@ -82,7 +82,7 @@ describe("Pomodoro Focus deterministic package", () => {
     expect(value.entries.map(({ path }) => path)).toEqual([
       "dist/runtime.js",
       "dist/settings.js",
-      "dist/sidebar-panel.js",
+      "dist/task-view.js",
       "manifest.json",
     ]);
 

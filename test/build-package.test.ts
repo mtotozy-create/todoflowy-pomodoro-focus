@@ -11,7 +11,7 @@ describe("build package integrity tests", () => {
     const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
     expect(manifest.id).toBe("todoflowy/pomodoro-focus");
     expect(manifest.manifestVersion).toBe(2);
-    expect(manifest.version).toBe("1.1.0");
+    expect(manifest.version).toBe("1.2.0");
     expect(manifest.runtime.entry).toBe("dist/runtime.js");
   });
 });

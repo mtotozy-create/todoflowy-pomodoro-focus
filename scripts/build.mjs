@@ -5,7 +5,7 @@ import { build } from "vite";
 
 const pluginRoot = resolve(import.meta.dirname, "..");
 const output = resolve(pluginRoot, "dist");
-const entries = ["runtime", "sidebar-panel", "settings"];
+const entries = ["runtime", "task-view", "settings"];
 
 await rm(output, { force: true, recursive: true });
 

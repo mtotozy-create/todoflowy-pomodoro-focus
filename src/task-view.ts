@@ -19,7 +19,6 @@ import type {
   PomodoroStatsRecord,
 } from "./core/types.js";
 import { button, element } from "./dom.js";
-import { SIDEBAR_PANEL_CSS } from "./sidebar-panel.css.js";
 import {
   loadSessionState,
   loadSettings,
@@ -29,11 +28,12 @@ import {
   saveStats,
   type StorageGateway,
 } from "./storage.js";
+import { TASK_VIEW_CSS } from "./task-view.css.js";
 import { createTodoGateway, type TodoGateway, type TodoItem } from "./todos.js";
 
 type EventType = "locale.changed" | "theme.changed" | "todos.changed";
 
-export interface SidebarPanelDependencies {
+export interface TaskViewDependencies {
   readonly getLocale: () => Promise<string>;
   readonly getTheme: () => Promise<"dark" | "light">;
   readonly now: () => Date;
@@ -46,9 +46,9 @@ export interface SidebarPanelDependencies {
   readonly toast: (message: string) => Promise<void>;
 }
 
-export async function mountSidebarPanel(
+export async function mountTaskView(
   root: HTMLElement,
-  dependencies: SidebarPanelDependencies,
+  dependencies: TaskViewDependencies,
 ): Promise<() => void> {
   let active = true;
   let timerId: ReturnType<typeof setInterval> | null = null;
@@ -72,7 +72,7 @@ export async function mountSidebarPanel(
   if (!active) return () => {};
 
   // 构建 DOM 节点结构
-  const styleEl = element("style", { text: SIDEBAR_PANEL_CSS });
+  const styleEl = element("style", { text: TASK_VIEW_CSS });
   const appContainer = element("section", { className: "pomodoro-studio-app" });
 
   // 1. 顶部 App Bar
@@ -144,7 +144,7 @@ export async function mountSidebarPanel(
 
   const bannerTitle = element("div", {
     className: "pomodoro-target-banner__title",
-    text: "-- Click a Todo on the right to start focusing --",
+    text: "-- Click a Todo on the right panel to start focusing --",
   });
   targetBanner.appendChild(bannerHeader);
   targetBanner.appendChild(bannerTitle);
@@ -290,7 +290,7 @@ export async function mountSidebarPanel(
   const renderUI = () => {
     if (!active) return;
 
-    // 1. 根据物理时间戳实时计算剩余时间 (修复时间不走 Bug 的核心)
+    // 1. 根据物理时间戳实时计算剩余时间
     const currentRemaining = computeCurrentRemainingSeconds(
       sessionState,
       dependencies.now().getTime(),
@@ -469,7 +469,7 @@ export async function mountSidebarPanel(
 
   renderUI();
 
-  // 1s 轮询步进 (包含基于真实时间戳的倒计时渲染与检测)
+  // 1s 轮询步进
   timerId = setInterval(async () => {
     if (!active) return;
     statsRecord = await loadStats(dependencies.storage);
@@ -480,12 +480,11 @@ export async function mountSidebarPanel(
         dependencies.now().getTime(),
       );
       if (currentRemaining <= 0) {
-        const { nextState, completedWorkMode, completedMinutes } =
-          completeSessionStep(
-            sessionState,
-            settings,
-            dependencies.now().toISOString(),
-          );
+        const { nextState, completedWorkMode } = completeSessionStep(
+          sessionState,
+          settings,
+          dependencies.now().toISOString(),
+        );
         sessionState = nextState;
         await saveSessionState(dependencies.storage, sessionState);
         if (completedWorkMode) {
@@ -523,7 +522,7 @@ export async function mountSidebarPanel(
 /* v8 ignore start -- production SDK lifecycle wiring */
 export const { mount } = defineView({
   mount: (root) =>
-    mountSidebarPanel(root, {
+    mountTaskView(root, {
       getLocale: () => plugin.context.getLocale(),
       getTheme: () => plugin.theme.get(),
       now: () => new Date(),

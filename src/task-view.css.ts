@@ -1,4 +1,4 @@
-export const SIDEBAR_PANEL_CSS = `
+export const TASK_VIEW_CSS = `
 :host, .pomodoro-studio-app {
   width: 100%;
   min-height: 100%;
