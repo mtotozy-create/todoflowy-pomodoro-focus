@@ -440,13 +440,32 @@ export async function mountTaskView(
       bannerTitle.textContent = `📘 ${sessionState.activeTodo.title}`;
       const est = sessionState.activeTodo.estimatedPomodoros ?? 1;
       const comp = sessionState.activeTodo.completedPomodoros ?? 0;
-      bannerHeaderRight.textContent = `Target Progress: 🍅 ${comp} / ${est}`;
+      const isCurrentlyFocusing = sessionState.mode === "work" && sessionState.isRunning;
+
+      if (isCurrentlyFocusing) {
+        bannerHeaderRight.textContent = `Target Progress: 🍅 ${comp} (+1 in progress) / ${est}`;
+      } else {
+        bannerHeaderRight.textContent = `Target Progress: 🍅 ${comp} / ${est}`;
+      }
 
       for (let i = 0; i < est; i++) {
         const isComp = i < comp;
+        const isCurrentFocusingDot = !isComp && isCurrentlyFocusing && i === comp;
+
+        let dotClass = "pomodoro-icon-dot--pending";
+        let dotText = "⚪";
+
+        if (isComp) {
+          dotClass = "pomodoro-icon-dot--completed";
+          dotText = "🍅";
+        } else if (isCurrentFocusingDot) {
+          dotClass = "pomodoro-icon-dot--active-pulsing";
+          dotText = "🍅";
+        }
+
         const dot = element("span", {
-          className: `pomodoro-icon-dot ${isComp ? "pomodoro-icon-dot--completed" : "pomodoro-icon-dot--pending"}`,
-          text: isComp ? "🍅" : "⚪",
+          className: `pomodoro-icon-dot ${dotClass}`,
+          text: dotText,
         });
         bannerIcons.appendChild(dot);
       }

@@ -199,8 +199,8 @@ export const TASK_VIEW_CSS = `
 }
 
 .pomodoro-icon-dot {
-  width: 24px;
-  height: 24px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
   display: inline-flex;
   align-items: center;
@@ -213,11 +213,23 @@ export const TASK_VIEW_CSS = `
   background: rgba(239, 68, 68, 0.15);
 }
 
+.pomodoro-icon-dot--active-pulsing {
+  background: rgba(239, 68, 68, 0.2);
+  border: 2px solid #ef4444;
+  animation: pomodoroPulse 1.5s infinite ease-in-out;
+}
+
 .pomodoro-icon-dot--pending {
-  background: rgba(125, 125, 125, 0.15);
+  background: rgba(125, 125, 125, 0.12);
   border: 1px dashed var(--theme-border-color, rgba(125, 125, 125, 0.4));
   color: var(--theme-muted-color, #9ca3af);
   font-size: 10px;
+}
+
+@keyframes pomodoroPulse {
+  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+  70% { transform: scale(1.1); box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
 }
 
 /* 控制按钮组 */
