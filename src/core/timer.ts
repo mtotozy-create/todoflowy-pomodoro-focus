@@ -6,13 +6,13 @@ import type {
   PomodoroSettings,
 } from "./types.js";
 
-/** 默认番茄钟设置 */
+/** 默认番茄钟设置 (默认自动开启休息倒计时) */
 export const DEFAULT_SETTINGS: PomodoroSettings = {
   workDurationMinutes: 25,
   shortBreakDurationMinutes: 5,
   longBreakDurationMinutes: 15,
   longBreakInterval: 4,
-  autoStartBreaks: false,
+  autoStartBreaks: true,
   notePrefix: "[Focus]",
 };
 

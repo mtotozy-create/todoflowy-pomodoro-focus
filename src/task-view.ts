@@ -421,11 +421,11 @@ export async function mountTaskView(
       badgeBg = "rgba(239, 68, 68, 0.15)";
       badgeFg = "#ef4444";
     } else if (sessionState.mode === "shortBreak") {
-      badgeText = "● SHORT BREAK";
+      badgeText = sessionState.isRunning ? "● SHORT BREAKING" : "❚❚ BREAK PAUSED";
       badgeBg = "rgba(16, 185, 129, 0.15)";
       badgeFg = "#10b981";
     } else if (sessionState.mode === "longBreak") {
-      badgeText = "● LONG BREAK";
+      badgeText = sessionState.isRunning ? "● LONG BREAKING" : "❚❚ BREAK PAUSED";
       badgeBg = "rgba(59, 130, 246, 0.15)";
       badgeFg = "#3b82f6";
     }
@@ -517,12 +517,34 @@ export async function mountTaskView(
         controlsRow.appendChild(resetBtn);
       }
     } else {
-      const skipBtn = button(
-        "⏭️ Skip Break",
-        () => void handleSkipBreak(),
-        "pomodoro-btn-giant-sub",
-      );
-      controlsRow.appendChild(skipBtn);
+      // 休息阶段 (shortBreak / longBreak)
+      if (sessionState.isRunning) {
+        const pauseBtn = button(
+          "⏸️ Pause Break",
+          () => void handlePause(),
+          "pomodoro-btn-giant-warning",
+        );
+        const skipBtn = button(
+          "⏭️ Skip Break",
+          () => void handleSkipBreak(),
+          "pomodoro-btn-giant-sub",
+        );
+        controlsRow.appendChild(pauseBtn);
+        controlsRow.appendChild(skipBtn);
+      } else {
+        const resumeBtn = button(
+          "▶️ Resume Break",
+          () => void handleResume(),
+          "pomodoro-btn-giant-primary",
+        );
+        const skipBtn = button(
+          "⏭️ Skip Break",
+          () => void handleSkipBreak(),
+          "pomodoro-btn-giant-sub",
+        );
+        controlsRow.appendChild(resumeBtn);
+        controlsRow.appendChild(skipBtn);
+      }
     }
 
     // 6. Pills Summary
