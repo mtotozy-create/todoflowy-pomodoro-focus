@@ -4,7 +4,7 @@ A production-grade Pomodoro Timer & Focus Statistics plugin for TodoFlowy.
 
 ## Features
 
-- **Sidebar Panel (`sidebar-panel`)**: Visual timer, todo selection, real-time focus control, and statistics dashboard.
+- **Task View (`task-view`)**: Opens the full timer, todo selection, real-time focus controls, and statistics dashboard in TodoFlowy's main workspace.
 - **Toolbar Action (`toolbar-action`)**: One-click quick toggle/start for focus sessions (`pomodoro-focus.start`).
 - **Settings Section (`settings-section`)**: Customizable focus duration (e.g. 25 min), short break (5 min), long break (15 min), auto-start settings, and tag formatting options.
 - **Automatic Todo Updates**: Automatically appends focus progress to the selected Todo note upon session completion with strict `revision` check.

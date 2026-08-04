@@ -11,6 +11,21 @@ describe("build package integrity tests", () => {
     const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
     expect(manifest.id).toBe("todoflowy/pomodoro-focus");
     expect(manifest.manifestVersion).toBe(2);
+    expect(manifest.version).toBe("1.0.2");
     expect(manifest.runtime.entry).toBe("dist/runtime.js");
+    expect(manifest.extensions).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          slot: "task-view",
+          id: "pomodoro-focus-view",
+          entry: "dist/task-view.js",
+        }),
+      ]),
+    );
+    expect(
+      manifest.extensions.some(
+        (extension: { slot?: string }) => extension.slot === "sidebar-panel",
+      ),
+    ).toBe(false);
   });
 });

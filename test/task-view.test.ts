@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { mountSidebarPanel } from "../src/sidebar-panel.js";
+import { mountTaskView } from "../src/task-view.js";
 import { saveSessionState } from "../src/storage.js";
 import { createTodoGateway } from "../src/todos.js";
 import { MemoryStorage, MemoryTodoSdk } from "./helpers.js";
@@ -10,8 +10,8 @@ const flushPromises = async () => {
   await Promise.resolve();
 };
 
-describe("sidebar-panel view tests", () => {
-  it("mounts sidebar panel and renders timer and controls cleanly", async () => {
+describe("task-view tests", () => {
+  it("mounts the task view and renders timer and controls cleanly", async () => {
     vi.useFakeTimers();
 
     const root = document.createElement("div");
@@ -21,7 +21,7 @@ describe("sidebar-panel view tests", () => {
 
     let eventListener: ((payload: unknown) => void) | null = null;
 
-    const unmount = await mountSidebarPanel(root, {
+    const unmount = await mountTaskView(root, {
       getLocale: async () => "en-US",
       getTheme: async () => "light",
       now: () => new Date("2026-08-04T12:00:00.000Z"),
@@ -36,21 +36,21 @@ describe("sidebar-panel view tests", () => {
       toast: async () => {},
     });
 
-    expect(root.querySelector(".pomodoro-panel")).not.toBeNull();
-    expect(root.querySelector(".pomodoro-panel__timer")?.textContent).toBe(
+    expect(root.querySelector(".pomodoro-view")).not.toBeNull();
+    expect(root.querySelector(".pomodoro-view__timer")?.textContent).toBe(
       "25:00",
     );
 
     // 1. 点击 Start Focus 按钮
     const startBtn = root.querySelector<HTMLButtonElement>(
-      ".pomodoro-panel__btn--primary",
+      ".pomodoro-view__btn--primary",
     );
     expect(startBtn).not.toBeNull();
     startBtn?.click();
 
     // 2. 选择 Todo
     const select = root.querySelector<HTMLSelectElement>(
-      ".pomodoro-panel__todo-select",
+      ".pomodoro-view__todo-select",
     );
     expect(select).not.toBeNull();
     if (select) {
@@ -73,7 +73,7 @@ describe("sidebar-panel view tests", () => {
 
     // 4. 点击 Pause 按钮
     const pauseBtn = root.querySelector<HTMLButtonElement>(
-      ".pomodoro-panel__btn--secondary",
+      ".pomodoro-view__btn--secondary",
     );
     pauseBtn?.click();
 
@@ -82,7 +82,7 @@ describe("sidebar-panel view tests", () => {
 
     // 5. 点击 Resume 按钮
     const resumeBtn = root.querySelector<HTMLButtonElement>(
-      ".pomodoro-panel__btn--primary",
+      ".pomodoro-view__btn--primary",
     );
     resumeBtn?.click();
 
@@ -91,7 +91,7 @@ describe("sidebar-panel view tests", () => {
 
     // 6. 点击 Reset 按钮
     const buttons = root.querySelectorAll<HTMLButtonElement>(
-      ".pomodoro-panel__btn",
+      ".pomodoro-view__btn",
     );
     buttons[1]?.click(); // Reset btn
 
@@ -108,7 +108,7 @@ describe("sidebar-panel view tests", () => {
     await flushPromises();
 
     const skipBtn = root.querySelector<HTMLButtonElement>(
-      ".pomodoro-panel__btn--secondary",
+      ".pomodoro-view__btn--secondary",
     );
     skipBtn?.click();
 
@@ -131,7 +131,7 @@ describe("sidebar-panel view tests", () => {
       },
     };
 
-    const unmount = await mountSidebarPanel(root, {
+    const unmount = await mountTaskView(root, {
       getLocale: async () => "en-US",
       getTheme: async () => "light",
       now: () => new Date(),
@@ -141,7 +141,7 @@ describe("sidebar-panel view tests", () => {
       toast: async () => {},
     });
 
-    expect(root.querySelector(".pomodoro-panel")).not.toBeNull();
+    expect(root.querySelector(".pomodoro-view")).not.toBeNull();
     unmount();
   });
 });

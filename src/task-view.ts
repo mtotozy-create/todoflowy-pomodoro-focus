@@ -17,7 +17,7 @@ import type {
   PomodoroStatsRecord,
 } from "./core/types.js";
 import { button, element } from "./dom.js";
-import { SIDEBAR_PANEL_CSS } from "./sidebar-panel.css.js";
+import { TASK_VIEW_CSS } from "./task-view.css.js";
 import {
   loadSessionState,
   loadSettings,
@@ -30,7 +30,7 @@ import { createTodoGateway, type TodoGateway, type TodoItem } from "./todos.js";
 
 type EventType = "locale.changed" | "theme.changed" | "todos.changed";
 
-export interface SidebarPanelDependencies {
+export interface TaskViewDependencies {
   readonly getLocale: () => Promise<string>;
   readonly getTheme: () => Promise<"dark" | "light">;
   readonly now: () => Date;
@@ -43,9 +43,9 @@ export interface SidebarPanelDependencies {
   readonly toast: (message: string) => Promise<void>;
 }
 
-export async function mountSidebarPanel(
+export async function mountTaskView(
   root: HTMLElement,
-  dependencies: SidebarPanelDependencies,
+  dependencies: TaskViewDependencies,
 ): Promise<() => void> {
   let active = true;
   let timerId: ReturnType<typeof setInterval> | null = null;
@@ -66,26 +66,27 @@ export async function mountSidebarPanel(
 
   if (!active) return () => {};
 
-  // 创建面板 DOM 元素
-  const styleEl = element("style", { text: SIDEBAR_PANEL_CSS });
-  const container = element("section", { className: "pomodoro-panel" });
+  // 创建主工作区 DOM 元素
+  const styleEl = element("style", { text: TASK_VIEW_CSS });
+  const container = element("section", { className: "pomodoro-view" });
+  const layout = element("div", { className: "pomodoro-view__layout" });
 
-  const card = element("div", { className: "pomodoro-panel__card" });
+  const card = element("div", { className: "pomodoro-view__card" });
   const modeBadge = element("span", {
-    className: "pomodoro-panel__mode-badge",
+    className: "pomodoro-view__mode-badge",
     text: "FOCUS",
   });
   const timerDisplay = element("div", {
-    className: "pomodoro-panel__timer",
+    className: "pomodoro-view__timer",
     text: "25:00",
   });
 
   // Todo 下拉框
   const todoSelect = element("select", {
-    className: "pomodoro-panel__todo-select",
+    className: "pomodoro-view__todo-select",
   });
   const controlsContainer = element("div", {
-    className: "pomodoro-panel__controls",
+    className: "pomodoro-view__controls",
   });
 
   card.appendChild(modeBadge);
@@ -95,31 +96,31 @@ export async function mountSidebarPanel(
 
   // 统计面板卡片
   const statsContainer = element("div", {
-    className: "pomodoro-panel__stats",
+    className: "pomodoro-view__stats",
   });
   const statBoxTodayCount = element("div", {
-    className: "pomodoro-panel__stat-box",
+    className: "pomodoro-view__stat-box",
   });
   const numTodayCount = element("div", {
-    className: "pomodoro-panel__stat-num",
+    className: "pomodoro-view__stat-num",
     text: "0",
   });
   const labelTodayCount = element("div", {
-    className: "pomodoro-panel__stat-label",
+    className: "pomodoro-view__stat-label",
     text: "Today Completed",
   });
   statBoxTodayCount.appendChild(numTodayCount);
   statBoxTodayCount.appendChild(labelTodayCount);
 
   const statBoxTodayTime = element("div", {
-    className: "pomodoro-panel__stat-box",
+    className: "pomodoro-view__stat-box",
   });
   const numTodayTime = element("div", {
-    className: "pomodoro-panel__stat-num",
+    className: "pomodoro-view__stat-num",
     text: "0m",
   });
   const labelTodayTime = element("div", {
-    className: "pomodoro-panel__stat-label",
+    className: "pomodoro-view__stat-label",
     text: "Today Focus",
   });
   statBoxTodayTime.appendChild(numTodayTime);
@@ -128,9 +129,10 @@ export async function mountSidebarPanel(
   statsContainer.appendChild(statBoxTodayCount);
   statsContainer.appendChild(statBoxTodayTime);
 
+  layout.appendChild(card);
+  layout.appendChild(statsContainer);
   container.appendChild(styleEl);
-  container.appendChild(card);
-  container.appendChild(statsContainer);
+  container.appendChild(layout);
 
   root.replaceChildren(container);
 
@@ -206,7 +208,7 @@ export async function mountSidebarPanel(
       const startBtn = button(
         "🍅 Start Focus",
         () => void handleStart(),
-        "pomodoro-panel__btn pomodoro-panel__btn--primary",
+        "pomodoro-view__btn pomodoro-view__btn--primary",
       );
       controlsContainer.appendChild(startBtn);
     } else if (sessionState.mode === "work") {
@@ -214,12 +216,12 @@ export async function mountSidebarPanel(
         const pauseBtn = button(
           "⏸️ Pause",
           () => void handlePause(),
-          "pomodoro-panel__btn pomodoro-panel__btn--secondary",
+          "pomodoro-view__btn pomodoro-view__btn--secondary",
         );
         const resetBtn = button(
           "🔄 Reset",
           () => void handleReset(),
-          "pomodoro-panel__btn pomodoro-panel__btn--secondary",
+          "pomodoro-view__btn pomodoro-view__btn--secondary",
         );
         controlsContainer.appendChild(pauseBtn);
         controlsContainer.appendChild(resetBtn);
@@ -227,12 +229,12 @@ export async function mountSidebarPanel(
         const resumeBtn = button(
           "▶️ Resume",
           () => void handleResume(),
-          "pomodoro-panel__btn pomodoro-panel__btn--primary",
+          "pomodoro-view__btn pomodoro-view__btn--primary",
         );
         const resetBtn = button(
           "🔄 Reset",
           () => void handleReset(),
-          "pomodoro-panel__btn pomodoro-panel__btn--secondary",
+          "pomodoro-view__btn pomodoro-view__btn--secondary",
         );
         controlsContainer.appendChild(resumeBtn);
         controlsContainer.appendChild(resetBtn);
@@ -242,7 +244,7 @@ export async function mountSidebarPanel(
       const skipBtn = button(
         "⏭️ Skip Break",
         () => void handleSkipBreak(),
-        "pomodoro-panel__btn pomodoro-panel__btn--secondary",
+        "pomodoro-view__btn pomodoro-view__btn--secondary",
       );
       controlsContainer.appendChild(skipBtn);
     }
@@ -330,7 +332,7 @@ export async function mountSidebarPanel(
 /* v8 ignore start -- production SDK lifecycle wiring */
 export const { mount } = defineView({
   mount: (root) =>
-    mountSidebarPanel(root, {
+    mountTaskView(root, {
       getLocale: () => plugin.context.getLocale(),
       getTheme: () => plugin.theme.get(),
       now: () => new Date(),
