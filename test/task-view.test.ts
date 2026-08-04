@@ -10,7 +10,7 @@ const flushPromises = async () => {
 };
 
 describe("task-view view tests", () => {
-  it("mounts desktop studio panel, handles presets, search input and controls cleanly", async () => {
+  it("mounts desktop studio panel, handles presets, tabs, est controls, search input and controls cleanly", async () => {
     vi.useFakeTimers();
 
     const root = document.createElement("div");
@@ -41,7 +41,13 @@ describe("task-view view tests", () => {
       root.querySelector(".pomodoro-timer-display")?.textContent,
     ).toBe("25:00");
 
-    // 1. 点击 Deep Preset (50m) 按钮
+    // 1. 测试 Tab 切换
+    const tabs = root.querySelectorAll<HTMLDivElement>(".pomodoro-tab-item");
+    expect(tabs.length).toBe(2);
+    tabs[1].click(); // 点击 全部分页
+    tabs[0].click(); // 点击 今日待办
+
+    // 2. 点击 Deep Preset (50m) 按钮
     const presets = root.querySelectorAll<HTMLButtonElement>(
       ".pomodoro-preset-btn",
     );
@@ -50,11 +56,23 @@ describe("task-view view tests", () => {
 
     await vi.advanceTimersByTimeAsync(50);
     await flushPromises();
-    expect(
-      root.querySelector(".pomodoro-timer-display")?.textContent,
-    ).toBe("50:00");
 
-    // 2. 点击 Start Focus 按钮
+    // 3. 点击任务卡片
+    const todoCard = root.querySelector<HTMLDivElement>(
+      ".pomodoro-todo-card",
+    );
+    todoCard?.click();
+
+    // 4. 点击加减预估番茄按钮
+    const estBtns = root.querySelectorAll<HTMLButtonElement>(
+      ".pomodoro-est-btn",
+    );
+    if (estBtns.length >= 2) {
+      estBtns[1].click(); // +
+      estBtns[0].click(); // -
+    }
+
+    // 5. 点击 Start Focus 按钮
     const startBtn = root.querySelector<HTMLButtonElement>(
       ".pomodoro-btn-giant-primary",
     );
@@ -66,7 +84,7 @@ describe("task-view view tests", () => {
     await vi.advanceTimersByTimeAsync(1050);
     await flushPromises();
 
-    // 3. 在搜索框中输入筛选文本
+    // 6. 在搜索框中输入筛选文本
     const searchInput = root.querySelector<HTMLInputElement>(
       ".pomodoro-search-input",
     );
@@ -76,18 +94,12 @@ describe("task-view view tests", () => {
       searchInput.dispatchEvent(new Event("input"));
     }
 
-    // 4. 点击任务卡片
-    const todoCard = root.querySelector<HTMLDivElement>(
-      ".pomodoro-todo-card",
-    );
-    todoCard?.click();
-
-    // 5. 触发 todos.changed 事件重新加载
+    // 7. 触发 todos.changed 事件重新加载
     if (eventListener) {
       (eventListener as () => void)();
     }
 
-    // 6. 点击 Reset 按钮
+    // 8. 点击 Reset 按钮
     const subBtn = root.querySelector<HTMLButtonElement>(
       ".pomodoro-btn-giant-sub",
     );

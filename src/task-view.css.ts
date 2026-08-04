@@ -1,7 +1,8 @@
 export const TASK_VIEW_CSS = `
 :host, .pomodoro-studio-app {
   width: 100%;
-  min-height: 100%;
+  height: 100%;
+  min-height: 100vh;
   box-sizing: border-box;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   color: var(--theme-text-color, CanvasText);
@@ -9,10 +10,11 @@ export const TASK_VIEW_CSS = `
 }
 
 .pomodoro-studio-app {
-  padding: 20px;
+  padding: 24px;
   display: flex;
   flex-direction: column;
   gap: 20px;
+  flex: 1;
 }
 
 /* 顶部 App Bar */
@@ -60,16 +62,16 @@ export const TASK_VIEW_CSS = `
   gap: 6px;
 }
 
-/* 桌面级双列网格 Bento Grid (全宽 100%) */
+/* 桌面级双列 Bento Grid 充满剩余高度 */
 .pomodoro-studio__grid {
   display: grid;
-  grid-template-columns: 1fr minmax(320px, 380px);
-  gap: 20px;
+  grid-template-columns: 1fr minmax(340px, 380px);
+  gap: 24px;
   width: 100%;
   flex: 1;
 }
 
-@media (max-width: 820px) {
+@media (max-width: 860px) {
   .pomodoro-studio__grid {
     grid-template-columns: 1fr;
   }
@@ -80,9 +82,10 @@ export const TASK_VIEW_CSS = `
   display: flex;
   flex-direction: column;
   gap: 20px;
+  height: 100%;
 }
 
-/* 预设模式 Selector Bar */
+/* Presets Quick Switch Bar */
 .pomodoro-presets {
   display: flex;
   background: var(--theme-card-bg, rgba(125, 125, 125, 0.05));
@@ -120,11 +123,11 @@ export const TASK_VIEW_CSS = `
   background: var(--theme-card-bg, rgba(125, 125, 125, 0.05));
   border: 1px solid var(--theme-border-color, rgba(125, 125, 125, 0.2));
   border-radius: 20px;
-  padding: 36px 24px;
+  padding: 40px 24px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 20px;
+  gap: 24px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
   position: relative;
   overflow: hidden;
@@ -150,7 +153,7 @@ export const TASK_VIEW_CSS = `
 
 .pomodoro-timer-display {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 80px;
+  font-size: 84px;
   font-weight: 800;
   letter-spacing: -0.04em;
   color: var(--theme-text-color, CanvasText);
@@ -161,7 +164,7 @@ export const TASK_VIEW_CSS = `
 /* 当前目标 Todo Banner */
 .pomodoro-target-banner {
   width: 100%;
-  max-width: 580px;
+  max-width: 600px;
   background: var(--theme-bg-color, Canvas);
   border: 1px dashed var(--theme-border-color, rgba(125, 125, 125, 0.3));
   border-radius: 14px;
@@ -233,6 +236,7 @@ export const TASK_VIEW_CSS = `
   display: flex;
   flex-direction: column;
   gap: 20px;
+  height: 100%;
 }
 
 .pomodoro-panel-card {
@@ -260,6 +264,27 @@ export const TASK_VIEW_CSS = `
   border-color: var(--theme-primary-color, #ef4444);
 }
 
+.pomodoro-picker-tabs {
+  display: flex;
+  gap: 8px;
+  border-bottom: 1px solid var(--theme-border-color, rgba(125, 125, 125, 0.2));
+  padding-bottom: 8px;
+}
+
+.pomodoro-tab-item {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--theme-muted-color, #6b7280);
+  cursor: pointer;
+  padding: 4px 10px;
+  border-radius: 6px;
+}
+
+.pomodoro-tab-item--active {
+  color: var(--theme-primary-color, #ef4444);
+  background: var(--theme-badge-bg, rgba(239, 68, 68, 0.15));
+}
+
 .pomodoro-todo-card {
   padding: 12px 14px;
   border-radius: 10px;
@@ -275,6 +300,28 @@ export const TASK_VIEW_CSS = `
 .pomodoro-todo-card:hover, .pomodoro-todo-card--selected {
   border-color: var(--theme-primary-color, #ef4444);
   background: var(--theme-badge-bg, rgba(239, 68, 68, 0.1));
+}
+
+.pomodoro-est-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.pomodoro-est-btn {
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  border: 1px solid var(--theme-border-color, rgba(125, 125, 125, 0.3));
+  background: var(--theme-bg-color, Canvas);
+  color: var(--theme-text-color, CanvasText);
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .pomodoro-timeline-item {
