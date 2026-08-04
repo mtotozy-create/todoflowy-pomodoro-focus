@@ -2,8 +2,8 @@
   "spdxVersion": "SPDX-2.3",
   "dataLicense": "CC0-1.0",
   "SPDXID": "SPDXRef-DOCUMENT",
-  "name": "todoflowy-pomodoro-focus-1.0.0",
-  "documentNamespace": "https://github.com/mtotozy-create/todoflowy-pomodoro-focus/sbom/1.0.0",
+  "name": "todoflowy-pomodoro-focus-1.0.1",
+  "documentNamespace": "https://github.com/mtotozy-create/todoflowy-pomodoro-focus/sbom/1.0.1",
   "creationInfo": {
     "created": "2026-08-04T00:00:00Z",
     "creators": ["Organization: TodoFlowy"]
@@ -12,7 +12,7 @@
     {
       "name": "todoflowy-pomodoro-focus",
       "SPDXID": "SPDXRef-Package-PomodoroFocus",
-      "versionInfo": "1.0.0",
+      "versionInfo": "1.0.1",
       "downloadLocation": "https://github.com/mtotozy-create/todoflowy-pomodoro-focus",
       "filesAnalyzed": false,
       "licenseConcluded": "MIT",
