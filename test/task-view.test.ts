@@ -99,7 +99,12 @@ describe("task-view view tests", () => {
       (eventListener as () => void)();
     }
 
-    // 8. 点击 Reset 按钮
+    // 8. 点击 Pause / Reset 按钮
+    const warningBtn = root.querySelector<HTMLButtonElement>(
+      ".pomodoro-btn-giant-warning",
+    );
+    warningBtn?.click();
+
     const subBtn = root.querySelector<HTMLButtonElement>(
       ".pomodoro-btn-giant-sub",
     );

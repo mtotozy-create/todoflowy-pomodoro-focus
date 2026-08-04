@@ -151,11 +151,13 @@ export const TASK_VIEW_CSS = `
   letter-spacing: 0.1em;
 }
 
+/* 无斜线的纯圆柱数字字体 */
 .pomodoro-timer-display {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 84px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-variant-numeric: tabular-nums;
+  font-size: 88px;
   font-weight: 800;
-  letter-spacing: -0.04em;
+  letter-spacing: -0.02em;
   color: var(--theme-text-color, CanvasText);
   line-height: 1;
   margin: 10px 0;
@@ -171,7 +173,7 @@ export const TASK_VIEW_CSS = `
   padding: 16px 20px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 
 .pomodoro-target-banner__header {
@@ -186,6 +188,36 @@ export const TASK_VIEW_CSS = `
   font-size: 15px;
   font-weight: 700;
   color: var(--theme-text-color, CanvasText);
+}
+
+/* 番茄进度图标列表组 */
+.pomodoro-banner-icons-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.pomodoro-icon-dot {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.pomodoro-icon-dot--completed {
+  background: rgba(239, 68, 68, 0.15);
+}
+
+.pomodoro-icon-dot--pending {
+  background: rgba(125, 125, 125, 0.15);
+  border: 1px dashed var(--theme-border-color, rgba(125, 125, 125, 0.4));
+  color: var(--theme-muted-color, #9ca3af);
+  font-size: 10px;
 }
 
 /* 控制按钮组 */
@@ -208,6 +240,10 @@ export const TASK_VIEW_CSS = `
   cursor: pointer;
   box-shadow: 0 4px 14px rgba(239, 68, 68, 0.35);
   transition: transform 0.15s ease, opacity 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
 .pomodoro-btn-giant-primary:hover {
@@ -216,6 +252,27 @@ export const TASK_VIEW_CSS = `
 
 .pomodoro-btn-giant-primary:active {
   transform: scale(0.98);
+}
+
+.pomodoro-btn-giant-warning {
+  flex: 1;
+  padding: 16px;
+  font-size: 15px;
+  font-weight: 700;
+  border-radius: 12px;
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  background: rgba(245, 158, 11, 0.1);
+  color: #d97706;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.pomodoro-btn-giant-warning:hover {
+  background: rgba(245, 158, 11, 0.2);
 }
 
 .pomodoro-btn-giant-sub {
@@ -229,6 +286,10 @@ export const TASK_VIEW_CSS = `
   color: var(--theme-text-color, CanvasText);
   cursor: pointer;
   transition: background-color 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
 /* 右栏：侧边管理抽屉 (Task Picker & Timeline Logs) */

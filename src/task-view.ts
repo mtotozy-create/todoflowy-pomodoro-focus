@@ -156,9 +156,7 @@ export async function mountTaskView(
     className: "pomodoro-target-banner__title",
     text: "-- Select a Todo on the right panel to start focusing --",
   });
-  const bannerIcons = element("div");
-  bannerIcons.style.fontSize = "15px";
-  bannerIcons.style.marginTop = "4px";
+  const bannerIcons = element("div", { className: "pomodoro-banner-icons-row" });
 
   targetBanner.appendChild(bannerHeader);
   targetBanner.appendChild(bannerTitle);
@@ -436,22 +434,30 @@ export async function mountTaskView(
     modeBadge.style.backgroundColor = badgeBg;
     modeBadge.style.color = badgeFg;
 
-    // 4. Target Banner Presentation
+    // 4. Target Banner Presentation & Tomato Icon Progress Bar
+    bannerIcons.replaceChildren();
     if (sessionState.activeTodo) {
       bannerTitle.textContent = `📘 ${sessionState.activeTodo.title}`;
       const est = sessionState.activeTodo.estimatedPomodoros ?? 1;
       const comp = sessionState.activeTodo.completedPomodoros ?? 0;
       bannerHeaderRight.textContent = `Target Progress: 🍅 ${comp} / ${est}`;
 
-      let icons = "";
       for (let i = 0; i < est; i++) {
-        icons += i < comp ? "🍅 " : "⚪ ";
+        const isComp = i < comp;
+        const dot = element("span", {
+          className: `pomodoro-icon-dot ${isComp ? "pomodoro-icon-dot--completed" : "pomodoro-icon-dot--pending"}`,
+          text: isComp ? "🍅" : "⚪",
+        });
+        bannerIcons.appendChild(dot);
       }
-      bannerIcons.textContent = icons.trim();
     } else {
       bannerTitle.textContent = "-- Select a todo on the right panel to start focusing --";
-      bannerHeaderRight.textContent = "Target: 🍅 1";
-      bannerIcons.textContent = "⚪";
+      bannerHeaderRight.textContent = "Target Progress: 🍅 0 / 1";
+      const dot = element("span", {
+        className: "pomodoro-icon-dot pomodoro-icon-dot--pending",
+        text: "⚪",
+      });
+      bannerIcons.appendChild(dot);
     }
 
     // 5. Control Buttons
@@ -468,7 +474,7 @@ export async function mountTaskView(
         const pauseBtn = button(
           "⏸️ Pause Focus",
           () => void handlePause(),
-          "pomodoro-btn-giant-sub",
+          "pomodoro-btn-giant-warning",
         );
         const resetBtn = button(
           "🔄 Reset",
