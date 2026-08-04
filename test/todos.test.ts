@@ -5,7 +5,7 @@ import { createTodoGateway } from "../src/todos.js";
 import { MemoryTodoSdk } from "./helpers.js";
 
 describe("todos gateway tests", () => {
-  it("lists pending (uncompleted) todos and filters with search keyword", async () => {
+  it("lists pending todos and filters with search keyword and today filter", async () => {
     const sdk = new MemoryTodoSdk();
     const gateway = createTodoGateway(sdk);
 
@@ -15,6 +15,12 @@ describe("todos gateway tests", () => {
     const filtered = await gateway.listPendingTodos({ search: "Write" });
     expect(filtered.length).toBe(1);
     expect(filtered[0].title).toBe("Write documentation");
+
+    const todayFiltered = await gateway.listPendingTodos({
+      filter: "today",
+      todayIsoDate: "2026-08-04T12:00:00.000Z",
+    });
+    expect(todayFiltered.length).toBeGreaterThan(0);
   });
 
   it("appends focus record to todo note with correct revision", async () => {

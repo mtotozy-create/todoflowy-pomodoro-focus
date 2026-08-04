@@ -64,11 +64,20 @@ export async function mountTaskView(
   let searchQuery = "";
   let activeTab: "today" | "all" = "today";
 
-  try {
-    pendingTodos = await dependencies.todos.listPendingTodos({ limit: 20 });
-  } catch {
-    pendingTodos = [];
-  }
+  const fetchTodoList = async () => {
+    try {
+      pendingTodos = await dependencies.todos.listPendingTodos({
+        filter: activeTab,
+        limit: 20,
+        search: searchQuery,
+        todayIsoDate: dependencies.now().toISOString(),
+      });
+    } catch {
+      pendingTodos = [];
+    }
+  };
+
+  await fetchTodoList();
 
   if (!active) return () => {};
 
@@ -170,7 +179,7 @@ export async function mountTaskView(
   // 右栏: 侧边抽屉 (Search Task Picker + Timeline Log)
   const sidebarCol = element("div", { className: "pomodoro-studio__sidebar" });
 
-  // 任务选择面板 Card (严格按照确认的 UI)
+  // 任务选择面板 Card
   const pickerCard = element("div", { className: "pomodoro-panel-card" });
   const pickerHeaderRow = element("div");
   pickerHeaderRow.style.display = "flex";
@@ -205,17 +214,19 @@ export async function mountTaskView(
     text: "全部分页",
   });
 
-  tabToday.addEventListener("click", () => {
+  tabToday.addEventListener("click", async () => {
     activeTab = "today";
     tabToday.className = "pomodoro-tab-item pomodoro-tab-item--active";
     tabAll.className = "pomodoro-tab-item";
+    await fetchTodoList();
     renderTodoList();
   });
 
-  tabAll.addEventListener("click", () => {
+  tabAll.addEventListener("click", async () => {
     activeTab = "all";
     tabAll.className = "pomodoro-tab-item pomodoro-tab-item--active";
     tabToday.className = "pomodoro-tab-item";
+    await fetchTodoList();
     renderTodoList();
   });
 
@@ -260,11 +271,13 @@ export async function mountTaskView(
 
   root.replaceChildren(appContainer);
 
-  // 渲染待办列表 (完全符合确认的原型卡片与 [+] [-] 预估调控)
+  // 渲染待办列表
   const renderTodoList = () => {
     todoListContainer.replaceChildren();
     if (pendingTodos.length === 0) {
-      const emptyNote = element("div", { text: "未找到相关待办事项。" });
+      const emptyNote = element("div", {
+        text: activeTab === "today" ? "今日暂无计划待办。" : "暂无待办事项。",
+      });
       emptyNote.style.fontSize = "12px";
       emptyNote.style.color = "var(--theme-muted-color, #6b7280)";
       todoListContainer.appendChild(emptyNote);
@@ -292,7 +305,7 @@ export async function mountTaskView(
       infoEl.appendChild(titleEl);
       infoEl.appendChild(metaEl);
 
-      // 右侧预估调控控件组 (Est Controls [-] 3 🍅 [+])
+      // 右侧预估调控控件组
       const estContainer = element("div", { className: "pomodoro-est-controls" });
       const estCount = isSelected
         ? sessionState.activeTodo?.estimatedPomodoros ?? 1
@@ -515,15 +528,8 @@ export async function mountTaskView(
 
   searchInput.addEventListener("input", async () => {
     searchQuery = searchInput.value;
-    try {
-      pendingTodos = await dependencies.todos.listPendingTodos({
-        search: searchQuery,
-        limit: 20,
-      });
-      renderTodoList();
-    } catch {
-      // ignore search error
-    }
+    await fetchTodoList();
+    renderTodoList();
   });
 
   const handlePresetChange = async (preset: FocusPreset) => {
@@ -600,7 +606,6 @@ export async function mountTaskView(
           dependencies.now().toISOString(),
         );
 
-        // 如果关联了待办且完成番茄阶段，递增 completedPomodoros
         if (completedWorkMode && nextState.activeTodo) {
           const prevComp = nextState.activeTodo.completedPomodoros ?? 0;
           const updatedActiveTodo = {
@@ -624,15 +629,8 @@ export async function mountTaskView(
 
   const unsubscribers = [
     dependencies.on("todos.changed", async () => {
-      try {
-        pendingTodos = await dependencies.todos.listPendingTodos({
-          search: searchQuery,
-          limit: 20,
-        });
-        if (active) renderTodoList();
-      } catch {
-        // ignore fetch error
-      }
+      await fetchTodoList();
+      if (active) renderTodoList();
     }),
   ];
 
