@@ -1,0 +1,59 @@
+{
+  "manifestVersion": 2,
+  "id": "todoflowy/pomodoro-focus",
+  "name": "Pomodoro Focus",
+  "version": "1.0.0",
+  "description": "Tomato timer and focus statistics plugin for TodoFlowy.",
+  "author": "TodoFlowy Official",
+  "homepage": "https://todoflowy.com",
+  "engines": {
+    "todoflowy": ">=0.3.2 <0.4.0",
+    "pluginApi": "^1.0.0"
+  },
+  "runtime": {
+    "entry": "dist/runtime.js",
+    "capabilities": [
+      "todos:read",
+      "todos:write",
+      "storage:read",
+      "storage:write",
+      "ui:toast"
+    ]
+  },
+  "extensions": [
+    {
+      "slot": "sidebar-panel",
+      "id": "pomodoro-panel",
+      "entry": "dist/sidebar-panel.js",
+      "label": "Pomodoro Focus",
+      "capabilities": [
+        "todos:read",
+        "todos:write",
+        "storage:read",
+        "storage:write",
+        "ui:toast",
+        "theme:read",
+        "context:locale"
+      ]
+    },
+    {
+      "slot": "toolbar-action",
+      "id": "start-pomodoro",
+      "command": "pomodoro-focus.start",
+      "label": "Start Pomodoro",
+      "icon": "timer"
+    },
+    {
+      "slot": "settings-section",
+      "id": "pomodoro-settings",
+      "entry": "dist/settings.js",
+      "label": "Pomodoro Settings",
+      "capabilities": [
+        "storage:read",
+        "storage:write",
+        "theme:read",
+        "context:locale"
+      ]
+    }
+  ]
+}
